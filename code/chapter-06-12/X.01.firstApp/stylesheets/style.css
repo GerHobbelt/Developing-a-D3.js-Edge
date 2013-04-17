@@ -1,0 +1,32 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+a {
+  color: #00b7ff;
+}
+#figure {
+  margin: auto;
+}
+.stop {
+  fill: #4682b4;
+  stroke: #000;
+  cursor: pointer;
+}
+.route {
+  stroke: #4682b4;
+  fill: none;
+}
+.city {
+  stroke: #fff;
+  stroke-fill: #fff;
+  fill: #f00;
+}
+#tableContainer {
+  overflow: auto;
+  max-height: 500px;
+}
+
+.table {
+  font-size: 10px
+}

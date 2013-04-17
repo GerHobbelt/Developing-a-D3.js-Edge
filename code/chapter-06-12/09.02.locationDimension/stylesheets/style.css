@@ -1,0 +1,21 @@
+.vizContainer {
+  border: 1px solid gray;
+}
+
+.spacer {
+  height: 1em;
+}
+#figure {
+  margin: auto;
+}
+
+.stop {
+  fill: #4682b4;
+  stroke: #000;
+  cursor: pointer;
+}
+.route {
+  stroke: #4682b4;
+  fill: none;
+}
+

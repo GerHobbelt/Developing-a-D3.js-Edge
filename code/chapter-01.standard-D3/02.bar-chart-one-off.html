@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="../../css/reset.css" type="text/css" rel="stylesheet" />
+<style>
+    .axis path, .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+    .bar {
+        fill: steelblue;
+        stroke: white;
+    }
+    .x.axis path {
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<div class="help">Usage: hover with the mouse over the bars to see their value information.</div>
+<div id="message">Message Box</div>
+<div id="container1"></div>
+<div id="container2"></div>
+<div id="container3"></div>
+<div id="container4"></div>
+
+<script src="../../lib/_/d3.v3.js"></script>
+<script>
+// Simplified two bar charts example
+///////////////////////////////////////////////////////////////////////
+
+// Chart1
+var data1 = [10, 20, 30, 40];
+
+var w = 400
+    h = 300,
+    barW = w / data1.length,
+    scaling = h / d3.max(data1);
+
+d3.select("#container1").append("svg")
+    .attr({class: "chart1", width: w, height: h})
+    .append("g")
+    .selectAll(".bar")
+    .data(data1)
+    .enter().append("rect")
+    .attr({
+        class: "bar",
+        x: function(d, i) { return i * barW; },
+        width: barW,
+        y: function(d, i) { return h - d * scaling; },
+        height: function(d, i) { return d * scaling; }
+    })
+    .on("mouseover", function(d, i) { 
+        d3.select("#message").text("chart1: " + d); 
+    });
+
+// Chart2
+var data2 = [10, 20, 30, 40];
+
+var w = 400
+    h = 300,
+    barW = w / data2.length,
+    scaling = h / d3.max(data2);
+
+d3.select("#container2").append("svg")
+    .attr({class: "chart2", width: w, height: h})
+    .append("g")
+    .selectAll(".bar")
+    .data(data1)
+    .enter().append("rect")
+    .attr({
+        class: "bar",
+        x: function(d, i) { return i * barW; },
+        width: barW,
+        y: function(d, i) { return h - d * scaling; },
+        height: function(d, i) { return d * scaling; }
+    })
+    .on("mouseover", function(d, i) { 
+        d3.select("#message").text("chart2: " + d); 
+    });
+
+
+///////////////////////////////////////////////////////////////////////
+// Reusable version?    See chapter-04.reusable-bar-chart/*.html 
+//                  (the simplest one there is 02.reusable-chart.html)
+///////////////////////////////////////////////////////////////////////
+</script>
+</body>
+</html>

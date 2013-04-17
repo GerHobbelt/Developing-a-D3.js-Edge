@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <title>Reusable Radial Histogram Chart</title>
+        <link rel="stylesheet" href="./stylesheets/bootstrap.css">
+        <link rel="stylesheet" href="./stylesheets/style.css">
+        <script src="./javascripts/d3.v3.min.js"></script>
+        <script src="./javascripts/crossfilter.js"></script>
+    </head>
+    
+    <body>
+        <div class="container">
+            <div class="row"> 
+                <h1>Reusable Radial Histogram Chart</h1>
+            </div>
+            <div class="row">
+                <div class="span6">
+                    <h3>Total Late Arrivals by Hour</h3>
+                    <div id="figure1">
+                    </div>
+                </div>
+                <div class="span6">
+                    <h3>Total Early Arrivals by Hour</h3>
+                    <div id="figure2">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div id="tableContainer" class="span12">
+                    <div id="table" class="table table-striped">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="./javascripts/transport.js">
+        </script>
+    </body>
+
+</html>

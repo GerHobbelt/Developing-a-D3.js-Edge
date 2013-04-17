@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+</style>
+</head>
+<body>
+<script src="../../lib/_/javascript-debug.js"></script>
+<script src="../../lib/_/javascript-stacktrace.js"></script>
+<script src="../../lib/_/d3.v3.js"></script>
+<script src="../../lib/_/debug-helper-functions.js"></script>
+<script>
+
+
+// A module is a boundary: a self-invoking function a.k.a. closure.
+///////////////////////////////////////////////////////////////////
+
+// A function is a scope boundary: private_variable_a and private_function_b are not directly accessible outside the function
+function scope_boundary() {
+    var private_variable_a;
+
+    function private_function_b() {
+        // ...
+    }
+
+    // ...
+    debug.log("E#1: exec : ", getCurrentFunctionName().func_n_loc);
+}
+
+
+
+// A function is a scope boundary: this is an anonymous function
+var scope = function () {
+    var private_variable_a;
+
+    function private_function_b() {
+        // ...
+    }
+
+    // ...
+    debug.log("E#2: exec : ", getCurrentFunctionName().func_n_loc);
+};
+
+
+
+// A 'basic' module boundary: anything inside is written like you would write your code without the boundary, but you have a local scope thanks to the anonymous function.
+(function () {
+    // ...
+    debug.log("E#3: exec self-executing anonymous function : ", getCurrentFunctionName().func_n_loc);
+})();
+
+
+
+// Same as above, only now we pass a 'global' parameter and make it available as a function argument inside the function=module scope
+(function (d3) {
+    // ...
+    debug.log("E#4: exec self-executing anonymous function : ", getCurrentFunctionName().func_n_loc);
+})(d3);
+
+
+
+// The module boundary above as you'ld find it in jQuery:
+(function ($) {
+    // ...
+    debug.log("E#5: exec self-executing anonymous function : ", getCurrentFunctionName().func_n_loc);
+})(jQuery);
+
+
+
+
+// Same as above: private_variable_a and private_function_b are not directly accessible outside the function
+(function (d3) {
+    var private_variable_a = d3.scale.linear(); // can access global d3 -> properties -> use D3 components as usual!
+
+    function private_function_b() {
+        // ...
+    }
+
+    // ...
+    debug.log("E#6: exec 'module' function : ", getCurrentFunctionName().func_n_loc);
+})(d3);
+
+
+
+// D3 module boiled down:
+d3 = (function() {
+    var d3 = {version: "3.x.y"}; // semver
+
+    // over 10000 lines of D3 code...
+    debug.log("E#7: exec 'D3 module' function : ", getCurrentFunctionName().func_n_loc, ", D3 = ", d3);
+
+    return d3;
+})();
+
+
+
+// Our new module in the D3 namespace:
+d3.edge = function() {
+    var private_variable_a;
+
+    function private_function_b() {
+        // ...
+    }
+
+    // ...
+    debug.log("E#8: exec namespaced module function : ", getCurrentFunctionName().func_n_loc);
+};
+
+
+
+// Our new module in the D3 namespace: et Dieu créa la closure!
+d3.edge = function() {
+    var private_variable_a;
+
+    function private_function_b() {
+        // ...
+        debug.log("E#9: exec function : ", getCurrentFunctionName().func_n_loc);
+    }
+
+    // The d3.edge anonymous function serves as a closure for once we use the returned function at a later time!
+    return function() {
+        // ...
+        debug.log("E#9: exec function : ", getCurrentFunctionName().func_n_loc);
+
+        // use the privates:
+        private_function_b();
+        // ...
+        ++private_variable_a;
+        // ...
+    };
+};
+
+/* usage of the above 'reusable function' */
+debug.log("E#9.a: going to instantiate the d3.edge component : ", getCurrentFunctionName().func_n_loc);
+
+// NOT this:
+var instance = new d3.edge();
+// and now what? We can't even call instance()! And there's no instance.function_whatever() to call yet either!
+
+
+
+debug.log("E#9.b: going to instantiate the d3.edge component : ", getCurrentFunctionName().func_n_loc);
+
+// BUT this:
+var instance = d3.edge();
+// and lo, you can already use it:
+instance();
+// that will run this code shown before:
+//
+//  // ...
+//  // use the privates:
+//  private_function_b();
+//  // ...
+//  ++private_variable_a;
+//  // ...
+
+
+
+// Our new module in the D3 namespace: et Dieu créa la closure! (The Sequel)
+d3.edge = function() {
+    var private_variable_a;
+
+    // private function
+    function X() {
+        // ...
+        debug.log("E#10: exec private function : ", getCurrentFunctionName().func_n_loc);
+    }
+
+    // 'edge' is a local variable, which we return at the end.
+    // It is a function, which is a First Class Citizen in JavaScript,
+    // thus it also serves as an object.
+    var edge = function() {
+        // ...
+        debug.log("E#10: exec returned function : ", getCurrentFunctionName().func_n_loc);
+
+        // use the privates:
+        X();
+        // ...
+        ++private_variable_a;
+        // ...
+    };
+
+    // API function d3.edge.A():
+    edge.A = function() {
+        // ...
+        debug.log("E#10: exec A() API function : ", getCurrentFunctionName().func_n_loc);
+
+        // call the private function:
+        X();
+        // ...
+        // allow chaining if we've nothing better to return:
+        return edge;
+    };
+
+    // API function d3.edge.B():
+    edge.B = function() {
+        // ...
+        debug.log("E#10: exec B() API function : ", getCurrentFunctionName().func_n_loc);
+
+        // call the private function:
+        X();
+        // ...
+        // allow chaining if we've nothing better to return:
+        return edge;
+    };
+
+    return edge;
+};
+
+/* usage of the above 'reusable function' */
+debug.log("E#10.a: going to instance the d3.edge component with .A() and .B() API functions : ", getCurrentFunctionName().func_n_loc);
+
+// NOT this:
+var instance = new d3.edge();
+// and now what?
+// Okay, so we can do this, but it's NASTY
+// as it rides on a wicked bit of JavaScript constructor language definition: see
+// https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Operators/new
+// where it says in step 3:
+// > If the constructor function doesn't explicitly return an object,
+// > the object created in step 1 is used instead. (Normally constructors
+// > don't return a value, but they can choose to do so if they want to
+// > override the normal object creation process.)
+instance();
+instance.A();
+instance.B();
+
+
+
+debug.log("E#10.b: going to instance the d3.edge component with .A() and .B() API functions : ", getCurrentFunctionName().func_n_loc);
+
+// BUT this:
+var instance = d3.edge();
+// and lo, you can already use it:
+instance();
+// that will run this code shown before:
+//
+//  // ...
+//  // use the privates:
+//  private_function_b();
+//  // ...
+//  ++private_variable_a;
+//  // ...
+
+// now call the API functions A() and B():
+instance.A();
+instance.B();
+
+
+
+
+
+
+
+
+///////////////////// # BAD PRACTICES FOLLOW # ////////////////////////
+
+// An example of a very simple module boundary: an object. Sometimes we can get away with this. The module is empty.
+d3.half_baked = {
+    // ...
+};
+
+
+
+d3.half_baked = {
+    //...
+    // API d3.half_baked.A()
+    A: function() {
+        // good luck using a shared private function X():
+        function X() {
+            //foo
+            //bar
+            debug.log("E#11: exec X()-in-A() private function : ", getCurrentFunctionName().func_n_loc);
+        }
+
+        //...
+        debug.log("E#11: exec half-baked.A() API function : ", getCurrentFunctionName().func_n_loc);
+        X();
+        //...
+    },//!comma!
+    // API d3.half_baked.B()
+    B: function() {
+        // not DRY, but WET!
+        function X() {
+            //foo
+            //bar
+            debug.log("E#11: exec X()-in-B() private function : ", getCurrentFunctionName().func_n_loc);
+        }
+        //...
+        debug.log("E#11: exec half-baked.B() API function : ", getCurrentFunctionName().func_n_loc);
+        X();
+        //...
+    }//!NO!comma!
+};
+
+
+/* usage of the above */
+
+debug.log("E#11: going to instance the d3.half_baked 'module' (WARNING: loads of Bad Practices in this construction!): ", getCurrentFunctionName().func_n_loc);
+
+// can't say this:
+//   var instance = d3.half_baked();
+// nor this (as d3.half_baked is an object, not a function):
+//   var instance = new d3.half_baked();
+// but like this:
+var instance = d3.half_baked;
+// Warning: it's an object reference, hence this would be turning all instances of half_baked into a singleton (very bad if you didn't require that behaviour specifically!)
+
+// can't do this:
+//   instance();
+// but only this:
+instance.A();
+instance.B();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+d3.proto_edge = function() {
+    var private_variable_a;
+
+    // private function
+    function X() {
+        // ...
+        debug.log("E#12: exec private function : ", getCurrentFunctionName().func_n_loc);
+    }
+
+    // 'edge' is a local variable, which we return at the end.
+    // It is a function, which is a First Class Citizen in JavaScript,
+    // thus it also serves as an object.
+    var proto_edge = function() {
+        // ...
+        debug.log("E#12: exec returned function : ", getCurrentFunctionName().func_n_loc);
+
+        // use the privates:
+        X();
+        // ...
+        ++private_variable_a;
+        // ...
+    };
+
+    // API function d3.edge.A():
+    proto_edge.prototype.A = function() {
+        // ...
+        debug.log("E#12: exec A() API function : ", getCurrentFunctionName().func_n_loc);
+
+        // call the private function:
+        X();
+        // ...
+        // allow chaining if we've nothing better to return:
+        return edge;
+    };
+
+    // API function d3.edge.B():
+    proto_edge.prototype.B = function() {
+        // ...
+        debug.log("E#12: exec B() API function : ", getCurrentFunctionName().func_n_loc);
+
+        // call the private function:
+        X();
+        // ...
+        // allow chaining if we've nothing better to return:
+        return edge;
+    };
+
+    return proto_edge;
+};
+
+/* usage of the above 'reusable function' */
+debug.log("E#12.a: going to instance the d3.edge component with .A() and .B() API functions : ", getCurrentFunctionName().func_n_loc);
+
+// NOT this:
+var instance = new d3.proto_edge();
+// and now what?
+// Okay, so we can do this, but it's NASTY
+// as it rides on a wicked bit of JavaScript constructor language definition: see
+// https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Operators/new
+// where it says in step 3:
+// > If the constructor function doesn't explicitly return an object,
+// > the object created in step 1 is used instead. (Normally constructors
+// > don't return a value, but they can choose to do so if they want to
+// > override the normal object creation process.)
+instance();
+//instance.A();
+//instance.B();
+
+
+
+debug.log("E#12.b: going to instance the d3.edge component with .A() and .B() API functions : ", getCurrentFunctionName().func_n_loc);
+
+// BUT this:
+var instance = d3.proto_edge();
+// and lo, you can already use it:
+instance();
+// that will run this code shown before:
+//
+//  // ...
+//  // use the privates:
+//  private_function_b();
+//  // ...
+//  ++private_variable_a;
+//  // ...
+
+// now call the API functions A() and B():
+instance.A();
+instance.B();
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
